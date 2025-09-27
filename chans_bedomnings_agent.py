@@ -4,7 +4,7 @@ from ratelimit import limits, sleep_and_retry
 # Konfigurera modellen med API-nyckeln
 def configure_model(api_key):
     genai.configure(api_key=api_key)
-    model = genai.GenerativeModel('gemini-1.5-flash') # Använder den snabba modellen Flash
+    model = genai.GenerativeModel('gemini-2.5-flash-lite') # Använder den snabba modellen Flash
     return model
 
 @sleep_and_retry

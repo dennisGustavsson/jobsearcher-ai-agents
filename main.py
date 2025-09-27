@@ -1,4 +1,4 @@
-# I din main.py
+
 import jobb_sokar_agent
 import annons_analyserings_agent
 import chans_bedomnings_agent
@@ -17,7 +17,7 @@ def main():
     # STEG 1: DEFINIERA MÅL
     # --------------------------------------------------------------------
     städer_med_id = {
-        "Stockholm": "0180",
+        # "Stockholm": "0180",
         "Örebro": "1880",
         "Karlstad": "1780",
         "Västerås": "1980"
