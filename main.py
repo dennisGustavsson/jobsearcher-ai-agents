@@ -3,6 +3,7 @@ import jobb_sokar_agent
 import annons_analyserings_agent
 import chans_bedomnings_agent
 import myprofile
+import database_manager
 import os
 from dotenv import load_dotenv
 
@@ -13,6 +14,8 @@ def main():
     if not api_key:
         print("Fel: Kunde inte hitta GOOGLE_API_KEY. Kontrollera din .env-fil.")
         return
+    
+    database_manager.initialize_database()
 
     # STEG 1: DEFINIERA MÅL
     # --------------------------------------------------------------------
@@ -44,12 +47,22 @@ def main():
         print(f"Analyserar de {len(jobb_att_analysera)} första jobben...\n")
 
         for jobb in jobb_att_analysera: 
+            job_id = jobb.get('id')
             headline = jobb.get('headline', 'N/A')
             print(f"--- Analyserar jobb: {headline} ---")
 
             jobb_beskrivning = jobb.get('description', {}).get('text', '')
             if not jobb_beskrivning:
                 print("   -> Hoppar över jobb utan beskrivning.")
+                continue
+
+            if not job_id:
+                print(f"   -> Hoppar över jobb utan ID: {headline}")
+                continue
+
+            # KONTROLLERA MINNET (DATABASEN)!
+            if database_manager.job_exists(job_id):
+                print(f"   -> Jobbet '{headline}' finns redan i databasen. Hoppar över.")
                 continue
 
             # STEG 3: KOPPLA IN AI-AGENTERNA
@@ -63,6 +76,16 @@ def main():
                 print("   -> Fel i bedömningen, hoppar över detta jobb.")
                 continue
             
+            # Skapa ett dictionary med all information som ska sparas
+            job_details_to_save = {
+                "id": job_id, # Glöm inte ID!
+                "stad": stad,
+                "job_title": headline,
+                "structured_data": strukturerad_data,
+                "bedomning": bedomning,
+                "link": jobb.get('webpage_url', 'N/A')
+            }
+
             alla_analyserade_jobb.append({
                 "stad": stad,
                 "job_title": headline,
@@ -70,6 +93,13 @@ def main():
                 "bedomning": bedomning,
                 "link": jobb.get('webpage_url', 'N/A')
             })
+
+            # HÄR ÄR DEN VIKTIGA ÄNDRINGEN!
+            # Spara det nya, analyserade jobbet till databasen.
+            database_manager.add_job_analysis(job_details_to_save)
+
+            # Lägg till i listan för att skriva till textfilen i slutet
+            alla_analyserade_jobb.append(job_details_to_save)
             print(f"   -> Analys och bedömning klar för: {headline}")
 
     # STEG 4: SPARA RESULTATET
